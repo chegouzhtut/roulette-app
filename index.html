@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decision Roulette</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🎰 Decision Roulette</h1>
+        
+        <div class="input-section">
+            <div class="input-wrapper">
+                <input 
+                    type="text" 
+                    id="optionInput" 
+                    placeholder="Введите вариант..."
+                    autocomplete="off"
+                >
+                <button class="btn" id="addBtn">Добавить</button>
+            </div>
+        </div>
+
+        <div class="options-list" id="optionsList">
+            <div class="empty-message">Добавьте варианты для выбора</div>
+        </div>
+
+        <button class="clear-list-btn" id="clearListBtn">🗑️ Очистить список</button>
+
+        <button class="btn spin-btn" id="spinBtn">🎲 Крутить рулетку!</button>
+
+        <div class="history-section">
+            <div class="history-header">
+                <h2>История побед</h2>
+                <button class="clear-history-btn" id="clearHistoryBtn">Очистить историю</button>
+            </div>
+            <div class="history-list" id="historyList">
+                <div class="empty-message">История пуста</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
