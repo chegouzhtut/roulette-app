@@ -238,6 +238,8 @@ function resetStyles() {
         // Убираем инлайновые стили transform
         item.style.transform = '';
         item.style.scale = '';
+        item.style.border = '';
+        item.style.boxShadow = '';
     });
 }
 
@@ -268,40 +270,66 @@ function startRouletteAnimation(winnerText) {
     const items = document.querySelectorAll('.option-item');
     const winnerIndex = options.indexOf(winnerText);
     
-    if (winnerIndex === -1) return; // Победитель не найден
+    if (winnerIndex === -1) {
+        // Победитель не найден - восстанавливаем интерфейс
+        isSpinning = false;
+        spinBtn.disabled = false;
+        addBtn.disabled = false;
+        optionInput.disabled = false;
+        return;
+    }
 
+    // Параметры анимации
     let currentIndex = 0;
-    let delay = 50; // Начальная задержка (быстро)
+    let delay = 50; // Начальная задержка (очень быстро)
     const minDelay = 50;
-    const maxDelay = 300;
-    const acceleration = 1.1; // Коэффициент замедления
+    const maxDelay = 400; // Финальная задержка
+    const acceleration = 1.08; // Коэффициент замедления
     let iterations = 0;
-    const minIterations = 20; // Минимум итераций для эффекта
+    const minIterations = 30; // Минимум итераций
+    const totalDuration = 3500; // Общая длительность анимации (3.5 секунды)
+    const minCycles = 2; // Минимум 2 полных круга
+    const minTotalIterations = minCycles * items.length + minIterations;
 
     function highlightNext() {
-        // Убираем подсветку с предыдущего
-        items.forEach(item => item.classList.remove('highlighted'));
+        // Убираем подсветку со всех элементов
+        items.forEach(item => item.classList.remove('highlight'));
 
-        // Подсвечиваем текущий
+        // Подсвечиваем текущий элемент
         if (items[currentIndex]) {
-            items[currentIndex].classList.add('highlighted');
+            items[currentIndex].classList.add('highlight');
         }
 
         currentIndex = (currentIndex + 1) % items.length;
         iterations++;
 
-        // Замедляем анимацию
+        // Замедляем анимацию после минимального количества итераций
         if (iterations > minIterations) {
             delay = Math.min(delay * acceleration, maxDelay);
         }
 
-        // Останавливаемся на победителе
-        if (delay >= maxDelay && iterations > minIterations) {
-            // Прокручиваем до индекса победителя
-            if (currentIndex !== winnerIndex) {
+        // Проверяем, нужно ли остановиться
+        // Останавливаемся когда: прошли минимум кругов И замедлились достаточно И следующий элемент - победитель
+        const nextIndex = (currentIndex) % items.length;
+        const shouldStop = iterations >= minTotalIterations && 
+                          delay >= maxDelay * 0.85 && 
+                          nextIndex === winnerIndex;
+
+        if (shouldStop) {
+            // Делаем еще один шаг, чтобы подсветить победителя
+            setTimeout(() => {
+                // Убираем класс highlight со всех элементов
+                items.forEach(item => item.classList.remove('highlight'));
+                
+                // Подсвечиваем победителя последний раз
+                if (items[winnerIndex]) {
+                    items[winnerIndex].classList.add('highlight');
+                }
+                
+                // Через небольшую задержку устанавливаем победителя
                 setTimeout(() => {
-                    // Сбрасываем все стили перед установкой победителя
-                    resetStyles();
+                    // Убираем highlight
+                    items.forEach(item => item.classList.remove('highlight'));
                     
                     // Устанавливаем победителя
                     if (items[winnerIndex]) {
@@ -322,33 +350,16 @@ function startRouletteAnimation(winnerText) {
                         optionInput.disabled = false;
                         optionInput.focus();
                     }, 2000);
-                }, delay);
-            } else {
-                setTimeout(() => {
-                    // Сбрасываем все стили перед установкой победителя
-                    resetStyles();
-                    
-                    items[currentIndex].classList.add('winner');
-                    addToHistory(winnerText);
-                    
-                    // Эффекты победы
-                    playWinEffects();
-                    
-                    setTimeout(() => {
-                        isSpinning = false;
-                        spinBtn.disabled = false;
-                        addBtn.disabled = false;
-                        optionInput.disabled = false;
-                        optionInput.focus();
-                    }, 2000);
-                }, delay);
-            }
+                }, 200);
+            }, delay);
             return;
         }
 
+        // Продолжаем анимацию
         setTimeout(highlightNext, delay);
     }
 
+    // Запускаем анимацию
     highlightNext();
 }
 
