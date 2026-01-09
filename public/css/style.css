@@ -248,6 +248,56 @@ html.light-mode #optionInput:focus {
     color: var(--ios-text-secondary);
 }
 
+.presets-scroll-container {
+    margin-bottom: 24px;
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+    scroll-snap-type: x proximity;
+    padding: 8px 0;
+    min-height: 48px; /* Фикс для стабильности высоты */
+}
+
+.presets-scroll-container::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+
+.preset-chip {
+    flex-shrink: 0;
+    padding: 10px 18px;
+    border-radius: 20px;
+    background: var(--ios-card);
+    border: none;
+    color: var(--ios-text-primary);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.preset-chip:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+}
+
+html.light-mode .preset-chip {
+    background: rgba(255, 255, 255, 0.8);
+}
+
+html.light-mode .preset-chip:hover {
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.preset-chip:active {
+    transform: scale(0.95);
+}
+
 .btn {
     height: 50px;
     padding: 0 30px;
@@ -308,24 +358,25 @@ html.light-mode #optionInput:focus {
     padding: 16px 20px;
     margin-bottom: 8px;
     background: rgba(255, 255, 255, 0.08);
-    border: none;
+    border: 2px solid transparent; /* Постоянная невидимая рамка для стабильности */
     border-radius: var(--ios-radius-sm);
-    transition: all 0.2s ease;
-    animation: fadeIn 0.3s ease;
+    transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1); /* Плавные переходы */
+    animation: slideIn 0.3s ease-out forwards;
+    position: relative;
 }
 
 html.light-mode .option-item {
     background: rgba(0, 0, 0, 0.05);
 }
 
-@keyframes fadeIn {
+@keyframes slideIn {
     from {
         opacity: 0;
-        transform: translateY(-8px);
+        transform: translateY(-10px) scale(0.95);
     }
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateY(0) scale(1);
     }
 }
 
@@ -336,25 +387,26 @@ html.light-mode .option-item {
 
 /* Класс для бегущей подсветки во время вращения */
 .option-item.highlight {
-    border: 2px solid var(--ios-accent-start);
+    border-color: var(--ios-accent-start); /* Меняем только цвет рамки, не толщину */
     background: rgba(255, 255, 255, 0.1);
     transform: scale(1.02);
-    transition: all 0.1s ease; /* Очень быстрая анимация */
+    z-index: 1; /* Приподнимаем над остальными, не расталкивая их */
+    transition: all 0.1s cubic-bezier(0.25, 0.8, 0.25, 1); /* Очень быстрая анимация */
 }
 
 html.light-mode .option-item.highlight {
     background: rgba(0, 0, 0, 0.1);
-    border: 2px solid var(--ios-accent-start);
+    border-color: var(--ios-accent-start);
 }
 
 /* Класс для ПОБЕДИТЕЛЯ (финальный) */
 .option-item.winner {
     background: linear-gradient(135deg, #34c759, #30b0c7); /* Зелено-голубой победный градиент */
-    border: 2px solid #ffffff;
+    border-color: #ffffff; /* Меняем только цвет рамки */
     color: white;
     transform: scale(1.1); /* Заметное увеличение */
     box-shadow: 0 0 30px rgba(52, 199, 89, 0.6); /* Мощное свечение */
-    z-index: 10;
+    z-index: 10; /* Выше всех элементов */
     font-weight: bold;
     transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Эффект пружины */
 }

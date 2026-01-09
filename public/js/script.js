@@ -10,6 +10,7 @@ const roomInfo = document.getElementById('roomInfo');
 const roomCode = document.getElementById('roomCode');
 const copyLinkBtn = document.getElementById('copyLinkBtn');
 const themeToggleBtn = document.getElementById('themeToggleBtn');
+const presetsContainer = document.getElementById('presetsContainer');
 
 // Инициализация Socket.io
 const socket = io();
@@ -19,6 +20,15 @@ let isSpinning = false;
 let currentRoomId = null;
 const HISTORY_KEY = 'rouletteHistory';
 const MAX_HISTORY_ITEMS = 10;
+
+// Конфигурация пресетов
+const PRESETS = {
+    food: { label: '🍔 Еда', items: ['Пицца 🍕', 'Суши 🍣', 'Бургеры 🍔', 'Паста 🍝', 'Шаурма 🌯', 'Вок 🥡'] },
+    movies: { label: '🎬 Кино', items: ['Комедия 😂', 'Ужасы 👻', 'Боевик 💥', 'Драма 🎭', 'Фантастика 👽'] },
+    activities: { label: '🎉 Туса', items: ['Правда/Действие', 'Я никогда не...', 'Крокодил', 'Караоке', 'Танцы'] },
+    dice: { label: '🎲 Кубик', items: ['1', '2', '3', '4', '5', '6'] },
+    yesno: { label: '🔮 Да/Нет', items: ['Да ✅', 'Нет ❌', 'Возможно 🤷‍♂️'] }
+};
 
 // Получение room ID из URL
 function getRoomIdFromURL() {
@@ -406,8 +416,43 @@ createRoomBtn.addEventListener('click', createRoom);
 copyLinkBtn.addEventListener('click', copyRoomLink);
 themeToggleBtn.addEventListener('click', toggleTheme);
 
+// Отрисовка пресетов
+function renderPresets() {
+    presetsContainer.innerHTML = '';
+    
+    Object.keys(PRESETS).forEach(key => {
+        const preset = PRESETS[key];
+        const chip = document.createElement('button');
+        chip.className = 'preset-chip';
+        chip.textContent = preset.label;
+        chip.addEventListener('click', () => applyPreset(key));
+        presetsContainer.appendChild(chip);
+    });
+}
+
+// Применение пресета
+function applyPreset(presetKey) {
+    if (isSpinning) return;
+    
+    const preset = PRESETS[presetKey];
+    if (!preset) return;
+    
+    // Очищаем поле ввода
+    optionInput.value = '';
+    
+    if (currentRoomId) {
+        // В мультиплеере: отправляем на сервер
+        socket.emit('updateOptions', currentRoomId, preset.items);
+    } else {
+        // Одиночный режим: применяем локально
+        options = [...preset.items];
+        renderOptions();
+    }
+}
+
 // Инициализация
 initTheme();
 initRoom();
+renderPresets();
 renderOptions();
 renderHistory();
