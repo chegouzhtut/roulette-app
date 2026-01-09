@@ -15,9 +15,16 @@ const presetsContainer = document.getElementById('presetsContainer');
 // Инициализация Socket.io
 const socket = io();
 
+// Экспорт socket для использования в других модулях
+window.socket = socket;
+
 let options = [];
 let isSpinning = false;
 let currentRoomId = null;
+
+// Экспорт переменных для использования в других модулях
+window.options = options;
+window.currentRoomId = currentRoomId;
 const HISTORY_KEY = 'rouletteHistory';
 const MAX_HISTORY_ITEMS = 10;
 
@@ -64,6 +71,7 @@ function initRoom() {
     const roomId = getRoomIdFromURL();
     if (roomId) {
         currentRoomId = roomId;
+        window.currentRoomId = currentRoomId; // Обновляем глобальную переменную
         roomCode.textContent = roomId;
         roomInfo.style.display = 'block';
         createRoomBtn.style.display = 'none';
@@ -117,6 +125,7 @@ function addOption() {
         } else {
             // Одиночный режим: меняем локально
             options.push(text);
+            window.options = options; // Обновляем глобальную переменную
             optionInput.value = '';
             renderOptions();
         }
@@ -134,6 +143,7 @@ function removeOption(index) {
         } else {
             // Одиночный режим: меняем локально
             options.splice(index, 1);
+            window.options = options; // Обновляем глобальную переменную
             renderOptions();
         }
     }
@@ -154,6 +164,7 @@ function clearOptions() {
     } else {
         // Одиночный режим: меняем локально
         options = [];
+        window.options = options; // Обновляем глобальную переменную
         optionInput.value = '';
         resetStyles();
         renderOptions();
@@ -178,6 +189,9 @@ function renderOptions() {
         </div>
     `).join('');
 }
+
+// Экспорт функции для использования в других модулях
+window.renderOptions = renderOptions;
 
 // Экранирование HTML
 function escapeHtml(text) {
@@ -241,6 +255,12 @@ function renderHistory() {
 
 // Сброс всех стилей элементов списка
 function resetStyles() {
+    // Отменяем текущую анимацию, если она активна
+    if (window.currentAnimationTimeoutId) {
+        clearTimeout(window.currentAnimationTimeoutId);
+        window.currentAnimationTimeoutId = null;
+    }
+    
     const items = document.querySelectorAll('.option-item');
     items.forEach(item => {
         // Убираем все классы активности
@@ -267,7 +287,15 @@ function playWinEffects() {
 
 // Запуск анимации рулетки
 function startRouletteAnimation(winnerText) {
-    if (options.length === 0 || isSpinning) return;
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/5fbeb120-b790-4467-9560-7d0a9211241b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:283',message:'startRouletteAnimation entry',data:{winnerText,optionsLength:options.length,options:options.slice(),isSpinning,itemsCount:document.querySelectorAll('.option-item').length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
+    if (options.length === 0 || isSpinning) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/5fbeb120-b790-4467-9560-7d0a9211241b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:285',message:'startRouletteAnimation early return',data:{optionsLength:options.length,isSpinning},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
+        return;
+    }
 
     isSpinning = true;
     spinBtn.disabled = true;
@@ -280,7 +308,14 @@ function startRouletteAnimation(winnerText) {
     const items = document.querySelectorAll('.option-item');
     const winnerIndex = options.indexOf(winnerText);
     
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/5fbeb120-b790-4467-9560-7d0a9211241b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:315',message:'winnerIndex calculated',data:{winnerText,winnerIndex,options:options.slice(),itemsCount:items.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    
     if (winnerIndex === -1) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/5fbeb120-b790-4467-9560-7d0a9211241b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:321',message:'winner not found in options',data:{winnerText,options:options.slice()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
         // Победитель не найден - восстанавливаем интерфейс
         isSpinning = false;
         spinBtn.disabled = false;
@@ -289,88 +324,100 @@ function startRouletteAnimation(winnerText) {
         return;
     }
 
-    // Параметры анимации
-    let currentIndex = 0;
-    let delay = 50; // Начальная задержка (очень быстро)
-    const minDelay = 50;
-    const maxDelay = 400; // Финальная задержка
-    const acceleration = 1.08; // Коэффициент замедления
-    let iterations = 0;
-    const minIterations = 30; // Минимум итераций
-    const totalDuration = 3500; // Общая длительность анимации (3.5 секунды)
-    const minCycles = 2; // Минимум 2 полных круга
-    const minTotalIterations = minCycles * items.length + minIterations;
-
-    function highlightNext() {
-        // Убираем подсветку со всех элементов
-        items.forEach(item => item.classList.remove('highlight'));
-
-        // Подсвечиваем текущий элемент
-        if (items[currentIndex]) {
-            items[currentIndex].classList.add('highlight');
+    // Буфер старта для синхронизации (500ms)
+    setTimeout(() => {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/5fbeb120-b790-4467-9560-7d0a9211241b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:333',message:'animation starting after buffer',data:{winnerText,winnerIndex,optionsLength:options.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
+        
+        // Вычисляем общее количество шагов
+        const minCycles = 4; // Минимум 4 полных круга
+        const startIndex = 0;
+        let totalSteps;
+        
+        if (winnerIndex >= startIndex) {
+            totalSteps = (options.length * minCycles) + (winnerIndex - startIndex);
+        } else {
+            // Если winnerIndex меньше startIndex, нужно пройти полный круг
+            totalSteps = (options.length * minCycles) + (options.length - startIndex) + winnerIndex;
         }
-
-        currentIndex = (currentIndex + 1) % items.length;
-        iterations++;
-
-        // Замедляем анимацию после минимального количества итераций
-        if (iterations > minIterations) {
-            delay = Math.min(delay * acceleration, maxDelay);
-        }
-
-        // Проверяем, нужно ли остановиться
-        // Останавливаемся когда: прошли минимум кругов И замедлились достаточно И следующий элемент - победитель
-        const nextIndex = (currentIndex) % items.length;
-        const shouldStop = iterations >= minTotalIterations && 
-                          delay >= maxDelay * 0.85 && 
-                          nextIndex === winnerIndex;
-
-        if (shouldStop) {
-            // Делаем еще один шаг, чтобы подсветить победителя
+        
+        let currentStep = 0;
+        let currentTimeoutId = null;
+        
+        // Функция показа победителя
+        function showWinner() {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/5fbeb120-b790-4467-9560-7d0a9211241b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:349',message:'showWinner called',data:{winnerText,winnerIndex,currentStep,totalSteps},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+            // #endregion
+            
+            // Убираем highlight со всех элементов
+            items.forEach(item => item.classList.remove('highlight'));
+            
+            // Устанавливаем победителя
+            if (items[winnerIndex]) {
+                items[winnerIndex].classList.add('winner');
+            }
+            
+            // Сохраняем победителя в историю
+            addToHistory(winnerText);
+            
+            // Эффекты победы
+            playWinEffects();
+            
+            // Восстанавливаем интерфейс
             setTimeout(() => {
-                // Убираем класс highlight со всех элементов
-                items.forEach(item => item.classList.remove('highlight'));
-                
-                // Подсвечиваем победителя последний раз
-                if (items[winnerIndex]) {
-                    items[winnerIndex].classList.add('highlight');
-                }
-                
-                // Через небольшую задержку устанавливаем победителя
-                setTimeout(() => {
-                    // Убираем highlight
-                    items.forEach(item => item.classList.remove('highlight'));
-                    
-                    // Устанавливаем победителя
-                    if (items[winnerIndex]) {
-                        items[winnerIndex].classList.add('winner');
-                    }
-                    
-                    // Сохраняем победителя в историю
-                    addToHistory(winnerText);
-                    
-                    // Эффекты победы
-                    playWinEffects();
-                    
-                    // Восстанавливаем интерфейс
-                    setTimeout(() => {
-                        isSpinning = false;
-                        spinBtn.disabled = false;
-                        addBtn.disabled = false;
-                        optionInput.disabled = false;
-                        optionInput.focus();
-                    }, 2000);
-                }, 200);
-            }, delay);
-            return;
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/5fbeb120-b790-4467-9560-7d0a9211241b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:370',message:'animation completed, restoring UI',data:{winnerText,winnerIndex},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+                // #endregion
+                isSpinning = false;
+                spinBtn.disabled = false;
+                addBtn.disabled = false;
+                optionInput.disabled = false;
+                optionInput.focus();
+            }, 2000);
         }
-
-        // Продолжаем анимацию
-        setTimeout(highlightNext, delay);
-    }
-
-    // Запускаем анимацию
-    highlightNext();
+        
+        // Рекурсивная функция для выполнения шагов
+        function runStep() {
+            // Вычисляем текущий индекс для подсветки
+            const currentIndex = (startIndex + currentStep) % options.length;
+            
+            // Убираем подсветку со всех элементов
+            items.forEach(item => item.classList.remove('highlight'));
+            
+            // Подсвечиваем текущий элемент
+            if (items[currentIndex]) {
+                items[currentIndex].classList.add('highlight');
+            }
+            
+            // Проверяем, достигли ли финиша
+            if (currentStep === totalSteps) {
+                // Это последний шаг - сразу показываем победителя с минимальной задержкой
+                setTimeout(showWinner, 100);
+                return; // Завершаем анимацию
+            }
+            
+            // Вычисляем задержку для следующего шага (квадратичное замедление)
+            // Новая формула: delay = 50 + (250 * (t/d) * (t/d))
+            // где t = currentStep, d = totalSteps
+            // Диапазон: от 50ms до 300ms
+            const progress = currentStep / totalSteps;
+            const delay = 50 + (250 * progress * progress);
+            
+            // Переходим к следующему шагу
+            currentStep++;
+            
+            // Планируем следующий шаг
+            currentTimeoutId = setTimeout(runStep, delay);
+        }
+        
+        // Сохраняем ID таймера для возможной отмены
+        window.currentAnimationTimeoutId = currentTimeoutId;
+        
+        // Запускаем первый шаг
+        runStep();
+    }, 500); // Буфер старта 500ms
 }
 
 // Кручение рулетки
@@ -381,6 +428,9 @@ function spinRoulette() {
         // В мультиплеере: выбираем случайного победителя и отправляем на сервер
         const randomIndex = Math.floor(Math.random() * options.length);
         const winnerText = options[randomIndex];
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/5fbeb120-b790-4467-9560-7d0a9211241b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:391',message:'spinRoulette sending spinWheel',data:{currentRoomId,randomIndex,winnerText,optionsLength:options.length,options:options.slice()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
         socket.emit('spinWheel', currentRoomId, winnerText);
     } else {
         // Одиночный режим: запускаем локально
@@ -390,13 +440,25 @@ function spinRoulette() {
     }
 }
 
+// Функция для установки options (для использования в других модулях)
+function setOptions(newOptions) {
+    options = newOptions;
+    window.options = options;
+    renderOptions();
+}
+
+// Экспорт функции
+window.setOptions = setOptions;
+
 // Socket.io обработчики событий
 socket.on('optionsUpdated', (newOptions) => {
-    options = newOptions;
-    renderOptions();
+    setOptions(newOptions);
 });
 
 socket.on('wheelSpun', (winnerText) => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/5fbeb120-b790-4467-9560-7d0a9211241b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:422',message:'wheelSpun received',data:{winnerText,optionsLength:options.length,options:options.slice(),isSpinning,currentRoomId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
     startRouletteAnimation(winnerText);
 });
 
@@ -443,11 +505,12 @@ function applyPreset(presetKey) {
     if (currentRoomId) {
         // В мультиплеере: отправляем на сервер
         socket.emit('updateOptions', currentRoomId, preset.items);
-    } else {
-        // Одиночный режим: применяем локально
-        options = [...preset.items];
-        renderOptions();
-    }
+        } else {
+            // Одиночный режим: применяем локально
+            options = [...preset.items];
+            window.options = options; // Обновляем глобальную переменную
+            renderOptions();
+        }
 }
 
 // Инициализация

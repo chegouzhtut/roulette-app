@@ -35,8 +35,14 @@ function initSocketHandler(io) {
 
         // Запуск рулетки
         socket.on('spinWheel', (roomId, winner) => {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/5fbeb120-b790-4467-9560-7d0a9211241b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'socketHandler.js:37',message:'spinWheel received',data:{socketId:socket.id,roomId,winner,roomOptions:rooms[roomId]?.options||[]},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+            // #endregion
             // Отправка события всем в комнате
             io.to(roomId).emit('wheelSpun', winner);
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/5fbeb120-b790-4467-9560-7d0a9211241b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'socketHandler.js:40',message:'wheelSpun emitted to room',data:{roomId,winner,clientsCount:io.sockets.adapter.rooms.get(roomId)?.size||0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+            // #endregion
         });
 
         // Отключение

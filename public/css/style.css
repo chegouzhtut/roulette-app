@@ -44,11 +44,36 @@ body {
     color: var(--ios-text-primary);
     min-height: 100vh;
     display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
+    flex-direction: column;
+    padding: 0;
     position: relative;
     overflow-x: hidden;
+}
+
+.app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background: var(--ios-card);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+html.light-mode .app-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.app-header h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    margin: 0;
+    color: var(--ios-text-primary);
+    letter-spacing: -0.5px;
 }
 
 body::before,
@@ -79,6 +104,7 @@ body::after {
 .container {
     max-width: 600px;
     width: 100%;
+    margin: 0 auto;
     background: var(--ios-card);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -86,21 +112,75 @@ body::after {
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     padding: 32px;
     text-align: center;
+    flex: 1;
+    margin-top: 20px;
+    margin-bottom: 20px;
 }
 
-.header-section {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
-    gap: 16px;
-    flex-wrap: wrap;
-}
 
 .header-actions {
     display: flex;
     align-items: center;
     gap: 12px;
+    flex-wrap: wrap;
+}
+
+.user-section {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.username {
+    color: var(--ios-text-primary);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.logout-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: var(--ios-text-primary);
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logout-btn:active {
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(0.95);
+}
+
+.login-btn {
+    height: 40px;
+    padding: 0 20px;
+    font-size: 0.9rem;
+}
+
+.collections-btn {
+    height: 50px;
+    padding: 0 20px;
+    font-size: 1rem;
+    flex-shrink: 0;
+    min-width: 50px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.collections-btn .btn-icon {
+    font-size: 1.2rem;
+}
+
+.collections-btn .btn-text {
+    display: inline;
 }
 
 .theme-toggle-btn {
@@ -123,13 +203,6 @@ body::after {
     transform: scale(0.95);
 }
 
-h1 {
-    font-size: 2.5rem;
-    font-weight: 800;
-    margin: 0;
-    color: var(--ios-text-primary);
-    letter-spacing: -0.5px;
-}
 
 .create-room-btn {
     height: 50px;
@@ -582,22 +655,415 @@ html.light-mode .history-item {
     font-size: 0.85rem;
 }
 
-@media (max-width: 600px) {
-    .container {
-        padding: 24px;
+/* Модальное окно */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.modal-content {
+    background: var(--ios-card);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: var(--ios-radius-lg);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    width: 100%;
+    max-width: 400px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 24px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+html.light-mode .modal-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.modal-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--ios-text-primary);
+}
+
+.modal-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 16px;
+    background: transparent;
+    border: none;
+    color: var(--ios-text-secondary);
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.modal-close:active {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(0.9);
+}
+
+.modal-tabs {
+    display: flex;
+    padding: 0 24px;
+    gap: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+html.light-mode .modal-tabs {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.tab-btn {
+    padding: 12px 20px;
+    background: transparent;
+    border: none;
+    color: var(--ios-text-secondary);
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+}
+
+.tab-btn.active {
+    color: var(--ios-accent-start);
+    border-bottom-color: var(--ios-accent-start);
+}
+
+.tab-btn:active {
+    opacity: 0.7;
+}
+
+.modal-body {
+    padding: 24px;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.modal-body form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--ios-text-primary);
+    box-shadow: none;
+}
+
+html.light-mode .btn-secondary {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: none;
+    transform: none;
+}
+
+html.light-mode .btn-secondary:hover {
+    background: rgba(0, 0, 0, 0.15);
+}
+
+.btn-secondary:active {
+    transform: scale(0.98);
+}
+
+.modal-body input {
+    height: 50px;
+    padding: 0 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid transparent;
+    border-radius: var(--ios-radius-sm);
+    color: var(--ios-text-primary);
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+html.light-mode .modal-body input {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.modal-body input:focus {
+    outline: none;
+    border-color: var(--ios-accent-start);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+html.light-mode .modal-body input:focus {
+    background: rgba(0, 0, 0, 0.08);
+}
+
+.modal-body input::placeholder {
+    color: var(--ios-text-secondary);
+}
+
+.error-message {
+    color: var(--ios-danger);
+    font-size: 0.85rem;
+    min-height: 20px;
+    margin-top: -8px;
+}
+
+/* Drawer для коллекций */
+.collections-drawer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--ios-card);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: var(--ios-radius-lg) var(--ios-radius-lg) 0 0;
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.3);
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    z-index: 999;
+    animation: drawerSlideUp 0.3s ease-out;
+}
+
+@keyframes drawerSlideUp {
+    from {
+        transform: translateY(100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
+.drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+html.light-mode .drawer-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.drawer-header h3 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--ios-text-primary);
+}
+
+.drawer-close {
+    width: 36px;
+    height: 36px;
+    border-radius: 18px;
+    background: transparent;
+    border: none;
+    color: var(--ios-text-secondary);
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.drawer-close:active {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(0.9);
+}
+
+.drawer-body {
+    padding: 20px 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.save-collection-btn {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.collections-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.collection-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: var(--ios-radius-sm);
+    transition: all 0.2s ease;
+}
+
+html.light-mode .collection-item {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.collection-item:active {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+html.light-mode .collection-item:active {
+    background: rgba(0, 0, 0, 0.08);
+}
+
+.collection-info {
+    flex: 1;
+}
+
+.collection-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--ios-text-primary);
+    margin-bottom: 4px;
+}
+
+.collection-count {
+    font-size: 0.85rem;
+    color: var(--ios-text-secondary);
+}
+
+.collection-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.collection-apply-btn {
+    height: 36px;
+    padding: 0 16px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, var(--ios-accent-start), var(--ios-accent-end));
+    border: none;
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.collection-apply-btn:active {
+    transform: scale(0.95);
+}
+
+.collection-delete-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 18px;
+    background: transparent;
+    border: none;
+    color: var(--ios-danger);
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.collection-delete-btn:active {
+    background: rgba(255, 69, 58, 0.15);
+    transform: scale(0.9);
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 0;
     }
 
-    h1 {
-        font-size: 2rem;
+    .app-header {
+        padding: 16px;
+    }
+
+    .app-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .container {
+        padding: 20px;
+        margin: 0;
+        border-radius: 0;
+        margin-top: 0;
+        margin-bottom: 0;
     }
 
     .input-wrapper {
-        flex-direction: column;
+        flex-direction: row;
+        gap: 10px;
+        align-items: stretch;
+    }
+
+    .collections-btn {
+        flex: 0 0 auto;
+        width: 50px;
+        padding: 0;
+        min-width: 50px;
+    }
+
+    .collections-btn .btn-text {
+        display: none;
+    }
+
+    #optionInput {
+        flex: 1;
     }
 
     .spin-btn {
         font-size: 1rem;
         height: 50px;
+        padding: 0 30px;
     }
 
     .history-header {
@@ -611,6 +1077,39 @@ html.light-mode .history-item {
     }
 
     .clear-history-btn {
+        width: 100%;
+    }
+
+    .header-actions {
+        gap: 8px;
+    }
+
+    .login-btn {
+        font-size: 0.85rem;
+        padding: 0 16px;
+        height: 36px;
+    }
+
+    .create-room-btn {
+        font-size: 0.8rem;
+        padding: 0 16px;
+        height: 36px;
+    }
+
+    .collections-drawer {
+        max-height: 90vh;
+    }
+
+    .modal-content {
+        margin: 20px;
+        max-width: calc(100% - 40px);
+    }
+
+    .modal-actions {
+        flex-direction: column;
+    }
+
+    .modal-actions .btn {
         width: 100%;
     }
 }

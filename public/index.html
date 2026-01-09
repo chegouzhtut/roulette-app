@@ -16,14 +16,20 @@
     </script>
 </head>
 <body>
-    <div class="container">
-        <div class="header-section">
-            <h1>🎰 Decision Roulette</h1>
-            <div class="header-actions">
-                <button class="theme-toggle-btn" id="themeToggleBtn" title="Переключить тему">🌓</button>
-                <button class="btn create-room-btn" id="createRoomBtn">Создать комнату</button>
+    <header class="app-header">
+        <h1>🎰 Decision Roulette</h1>
+        <div class="header-actions">
+            <button class="theme-toggle-btn" id="themeToggleBtn" title="Переключить тему">🌓</button>
+            <div class="user-section" id="userSection" style="display: none;">
+                <span class="username" id="usernameDisplay"></span>
+                <button class="logout-btn" id="logoutBtn" title="Выйти">🚪</button>
             </div>
+            <button class="btn login-btn" id="loginBtn">Войти</button>
+            <button class="btn create-room-btn" id="createRoomBtn">Создать комнату</button>
         </div>
+    </header>
+
+    <div class="container">
 
         <div class="room-info" id="roomInfo" style="display: none;">
             <div class="room-code">
@@ -34,6 +40,10 @@
         
         <div class="input-section">
             <div class="input-wrapper">
+                <button class="btn collections-btn" id="collectionsBtn" style="display: none;" title="Мои списки">
+                    <span class="btn-icon">📂</span>
+                    <span class="btn-text">Мои списки</span>
+                </button>
                 <input 
                     type="text" 
                     id="optionInput" 
@@ -71,8 +81,76 @@
         </div>
     </div>
 
+    <!-- Модальное окно авторизации -->
+    <div class="modal-overlay" id="authModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Авторизация</h2>
+                <button class="modal-close" id="closeAuthModal">×</button>
+            </div>
+            <div class="modal-tabs">
+                <button class="tab-btn active" data-tab="login">Вход</button>
+                <button class="tab-btn" data-tab="register">Регистрация</button>
+            </div>
+            <div class="modal-body">
+                <div class="tab-content active" id="loginTab">
+                    <form id="loginForm">
+                        <input type="text" id="loginUsername" placeholder="Логин" required>
+                        <input type="password" id="loginPassword" placeholder="Пароль" required>
+                        <button type="submit" class="btn">Войти</button>
+                        <div class="error-message" id="loginError"></div>
+                    </form>
+                </div>
+                <div class="tab-content" id="registerTab">
+                    <form id="registerForm">
+                        <input type="text" id="registerUsername" placeholder="Логин" required>
+                        <input type="password" id="registerPassword" placeholder="Пароль (мин. 6 символов)" required>
+                        <button type="submit" class="btn">Зарегистрироваться</button>
+                        <div class="error-message" id="registerError"></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно сохранения коллекции -->
+    <div class="modal-overlay" id="saveCollectionModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Назови список</h2>
+                <button class="modal-close" id="closeSaveCollectionModal">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="saveCollectionForm">
+                    <input type="text" id="collectionNameInput" placeholder="Введите название..." required autofocus>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelSaveCollection">Отмена</button>
+                        <button type="submit" class="btn">Сохранить</button>
+                    </div>
+                    <div class="error-message" id="saveCollectionError"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Меню коллекций -->
+    <div class="collections-drawer" id="collectionsDrawer" style="display: none;">
+        <div class="drawer-header">
+            <h3>📂 Мои Списки</h3>
+            <button class="drawer-close" id="closeCollectionsDrawer">×</button>
+        </div>
+        <div class="drawer-body">
+            <button class="btn save-collection-btn" id="saveCollectionBtn">💾 Сохранить текущий список</button>
+            <div class="collections-list" id="collectionsList">
+                <div class="empty-message">Нет сохраненных списков</div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/collections.js"></script>
     <script src="js/script.js"></script>
 </body>
 </html>
