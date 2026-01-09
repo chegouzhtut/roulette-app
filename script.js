@@ -172,42 +172,30 @@ function spinRoulette() {
                 const randomIndex = Math.floor(Math.random() * options.length);
                 const winnerText = options[randomIndex];
                 
-                // Прокручиваем до случайного индекса
-                if (currentIndex !== randomIndex) {
+                // Убираем подсветку со всех элементов перед установкой победителя
+                setTimeout(() => {
+                    // Убираем все подсветки
+                    items.forEach(item => {
+                        item.classList.remove('highlighted', 'winner');
+                    });
+                    
+                    // Устанавливаем победителя
+                    if (items[randomIndex]) {
+                        items[randomIndex].classList.add('winner');
+                    }
+                    
+                    // Сохраняем победителя в историю
+                    addToHistory(winnerText);
+                    
+                    // Восстанавливаем интерфейс
                     setTimeout(() => {
-                        items.forEach(item => item.classList.remove('highlighted'));
-                        if (items[randomIndex]) {
-                            items[randomIndex].classList.add('highlighted', 'winner');
-                        }
-                        
-                        // Сохраняем победителя в историю
-                        addToHistory(winnerText);
-                        
-                        // Восстанавливаем интерфейс
-                        setTimeout(() => {
-                            isSpinning = false;
-                            spinBtn.disabled = false;
-                            addBtn.disabled = false;
-                            optionInput.disabled = false;
-                            optionInput.focus();
-                        }, 2000);
-                    }, delay);
-                } else {
-                    setTimeout(() => {
-                        items[currentIndex].classList.add('winner');
-                        
-                        // Сохраняем победителя в историю
-                        addToHistory(winnerText);
-                        
-                        setTimeout(() => {
-                            isSpinning = false;
-                            spinBtn.disabled = false;
-                            addBtn.disabled = false;
-                            optionInput.disabled = false;
-                            optionInput.focus();
-                        }, 2000);
-                    }, delay);
-                }
+                        isSpinning = false;
+                        spinBtn.disabled = false;
+                        addBtn.disabled = false;
+                        optionInput.disabled = false;
+                        optionInput.focus();
+                    }, 2000);
+                }, delay);
                 return;
             }
 

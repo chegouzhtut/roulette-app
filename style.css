@@ -96,6 +96,7 @@ h1 {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1rem;
+    gap: 15px;
 }
 
 .options-header h3 {
