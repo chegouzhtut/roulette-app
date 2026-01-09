@@ -33,6 +33,10 @@ function removeOption(index) {
 function clearOptions() {
     if (isSpinning) return;
     
+    if (!confirm('Вы уверены, что хотите очистить весь список вариантов?')) {
+        return;
+    }
+    
     options = [];
     optionInput.value = '';
     
@@ -49,12 +53,12 @@ function renderOptions() {
     if (options.length === 0) {
         optionsList.innerHTML = '<div class="empty-message">Добавьте варианты для выбора</div>';
         spinBtn.disabled = true;
-        clearListBtn.style.display = 'none';
+        clearListBtn.classList.add('hidden');
         return;
     }
 
     spinBtn.disabled = false;
-    clearListBtn.style.display = 'inline-block';
+    clearListBtn.classList.remove('hidden');
     optionsList.innerHTML = options.map((option, index) => `
         <div class="option-item" data-index="${index}">
             <span class="option-text">${escapeHtml(option)}</span>
