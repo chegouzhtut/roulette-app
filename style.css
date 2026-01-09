@@ -21,15 +21,62 @@ body {
     text-align: center;
 }
 
+.header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
 h1 {
     font-size: 3rem;
-    margin-bottom: 2rem;
+    margin: 0;
     background: linear-gradient(135deg, #00ff88, #8b5cf6);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     text-shadow: 0 0 30px rgba(0, 255, 136, 0.5);
     letter-spacing: 2px;
+}
+
+.create-room-btn {
+    padding: 12px 24px;
+    font-size: 0.9rem;
+}
+
+.room-info {
+    margin-bottom: 2rem;
+    padding: 15px 20px;
+    background: #151515;
+    border: 1px solid #333;
+    border-radius: 10px;
+}
+
+.room-code {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.room-code span {
+    color: #aaa;
+    font-size: 1rem;
+}
+
+.room-code strong {
+    color: #00ff88;
+    font-family: monospace;
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+}
+
+.copy-link-btn {
+    padding: 10px 20px;
+    font-size: 0.85rem;
 }
 
 .input-section {

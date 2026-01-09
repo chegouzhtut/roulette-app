@@ -8,7 +8,17 @@
 </head>
 <body>
     <div class="container">
-        <h1>🎰 Decision Roulette</h1>
+        <div class="header-section">
+            <h1>🎰 Decision Roulette</h1>
+            <button class="btn create-room-btn" id="createRoomBtn">Создать комнату</button>
+        </div>
+
+        <div class="room-info" id="roomInfo" style="display: none;">
+            <div class="room-code">
+                <span>Код комнаты: <strong id="roomCode"></strong></span>
+                <button class="btn copy-link-btn" id="copyLinkBtn">Скопировать ссылку</button>
+            </div>
+        </div>
         
         <div class="input-section">
             <div class="input-wrapper">
@@ -45,6 +55,7 @@
         </div>
     </div>
 
+    <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

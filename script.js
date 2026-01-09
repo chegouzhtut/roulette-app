@@ -5,27 +5,95 @@ const spinBtn = document.getElementById('spinBtn');
 const historyList = document.getElementById('historyList');
 const clearHistoryBtn = document.getElementById('clearHistoryBtn');
 const clearListBtn = document.getElementById('clearListBtn');
+const createRoomBtn = document.getElementById('createRoomBtn');
+const roomInfo = document.getElementById('roomInfo');
+const roomCode = document.getElementById('roomCode');
+const copyLinkBtn = document.getElementById('copyLinkBtn');
+
+// Инициализация Socket.io
+const socket = io();
 
 let options = [];
 let isSpinning = false;
+let currentRoomId = null;
 const HISTORY_KEY = 'rouletteHistory';
 const MAX_HISTORY_ITEMS = 10;
+
+// Получение room ID из URL
+function getRoomIdFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('room');
+}
+
+// Генерация случайного ID комнаты
+function generateRoomId() {
+    return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
+// Создание комнаты
+function createRoom() {
+    const roomId = generateRoomId();
+    const newURL = `${window.location.origin}${window.location.pathname}?room=${roomId}`;
+    window.location.href = newURL;
+}
+
+// Копирование ссылки
+function copyRoomLink() {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(() => {
+        copyLinkBtn.textContent = 'Скопировано!';
+        setTimeout(() => {
+            copyLinkBtn.textContent = 'Скопировать ссылку';
+        }, 2000);
+    });
+}
+
+// Инициализация комнаты
+function initRoom() {
+    const roomId = getRoomIdFromURL();
+    if (roomId) {
+        currentRoomId = roomId;
+        roomCode.textContent = roomId;
+        roomInfo.style.display = 'block';
+        createRoomBtn.style.display = 'none';
+        socket.emit('joinRoom', roomId);
+    } else {
+        roomInfo.style.display = 'none';
+        createRoomBtn.style.display = 'inline-block';
+    }
+}
 
 // Добавление варианта
 function addOption() {
     const text = optionInput.value.trim();
     if (text && !isSpinning) {
-        options.push(text);
-        optionInput.value = '';
-        renderOptions();
+        if (currentRoomId) {
+            // В мультиплеере: отправляем на сервер, не меняем локально
+            const newOptions = [...options, text];
+            socket.emit('updateOptions', currentRoomId, newOptions);
+            optionInput.value = '';
+        } else {
+            // Одиночный режим: меняем локально
+            options.push(text);
+            optionInput.value = '';
+            renderOptions();
+        }
     }
 }
 
 // Удаление варианта
 function removeOption(index) {
     if (!isSpinning) {
-        options.splice(index, 1);
-        renderOptions();
+        if (currentRoomId) {
+            // В мультиплеере: отправляем на сервер, не меняем локально
+            const newOptions = [...options];
+            newOptions.splice(index, 1);
+            socket.emit('updateOptions', currentRoomId, newOptions);
+        } else {
+            // Одиночный режим: меняем локально
+            options.splice(index, 1);
+            renderOptions();
+        }
     }
 }
 
@@ -37,15 +105,19 @@ function clearOptions() {
         return;
     }
     
-    options = [];
-    optionInput.value = '';
-    
-    // Убираем подсветку победителя
-    document.querySelectorAll('.option-item').forEach(item => {
-        item.classList.remove('highlighted', 'winner');
-    });
-    
-    renderOptions();
+    if (currentRoomId) {
+        // В мультиплеере: отправляем на сервер
+        socket.emit('updateOptions', currentRoomId, []);
+        optionInput.value = '';
+    } else {
+        // Одиночный режим: меняем локально
+        options = [];
+        optionInput.value = '';
+        document.querySelectorAll('.option-item').forEach(item => {
+            item.classList.remove('highlighted', 'winner');
+        });
+        renderOptions();
+    }
 }
 
 // Отрисовка списка вариантов
@@ -127,8 +199,8 @@ function renderHistory() {
     `).join('');
 }
 
-// Кручение рулетки
-function spinRoulette() {
+// Запуск анимации рулетки
+function startRouletteAnimation(winnerText) {
     if (options.length === 0 || isSpinning) return;
 
     isSpinning = true;
@@ -142,6 +214,10 @@ function spinRoulette() {
     });
 
     const items = document.querySelectorAll('.option-item');
+    const winnerIndex = options.indexOf(winnerText);
+    
+    if (winnerIndex === -1) return; // Победитель не найден
+
     let currentIndex = 0;
     let delay = 50; // Начальная задержка (быстро)
     const minDelay = 50;
@@ -167,12 +243,10 @@ function spinRoulette() {
             delay = Math.min(delay * acceleration, maxDelay);
         }
 
-            // Останавливаемся на случайном варианте
-            if (delay >= maxDelay && iterations > minIterations) {
-                const randomIndex = Math.floor(Math.random() * options.length);
-                const winnerText = options[randomIndex];
-                
-                // Убираем подсветку со всех элементов перед установкой победителя
+        // Останавливаемся на победителе
+        if (delay >= maxDelay && iterations > minIterations) {
+            // Прокручиваем до индекса победителя
+            if (currentIndex !== winnerIndex) {
                 setTimeout(() => {
                     // Убираем все подсветки
                     items.forEach(item => {
@@ -180,8 +254,8 @@ function spinRoulette() {
                     });
                     
                     // Устанавливаем победителя
-                    if (items[randomIndex]) {
-                        items[randomIndex].classList.add('winner');
+                    if (items[winnerIndex]) {
+                        items[winnerIndex].classList.add('winner');
                     }
                     
                     // Сохраняем победителя в историю
@@ -196,14 +270,54 @@ function spinRoulette() {
                         optionInput.focus();
                     }, 2000);
                 }, delay);
-                return;
+            } else {
+                setTimeout(() => {
+                    items[currentIndex].classList.add('winner');
+                    addToHistory(winnerText);
+                    setTimeout(() => {
+                        isSpinning = false;
+                        spinBtn.disabled = false;
+                        addBtn.disabled = false;
+                        optionInput.disabled = false;
+                        optionInput.focus();
+                    }, 2000);
+                }, delay);
             }
+            return;
+        }
 
         setTimeout(highlightNext, delay);
     }
 
     highlightNext();
 }
+
+// Кручение рулетки
+function spinRoulette() {
+    if (options.length === 0 || isSpinning) return;
+
+    if (currentRoomId) {
+        // В мультиплеере: выбираем случайного победителя и отправляем на сервер
+        const randomIndex = Math.floor(Math.random() * options.length);
+        const winnerText = options[randomIndex];
+        socket.emit('spinWheel', currentRoomId, winnerText);
+    } else {
+        // Одиночный режим: запускаем локально
+        const randomIndex = Math.floor(Math.random() * options.length);
+        const winnerText = options[randomIndex];
+        startRouletteAnimation(winnerText);
+    }
+}
+
+// Socket.io обработчики событий
+socket.on('optionsUpdated', (newOptions) => {
+    options = newOptions;
+    renderOptions();
+});
+
+socket.on('wheelSpun', (winnerText) => {
+    startRouletteAnimation(winnerText);
+});
 
 // Обработчики событий
 addBtn.addEventListener('click', addOption);
@@ -217,7 +331,10 @@ optionInput.addEventListener('keypress', (e) => {
 spinBtn.addEventListener('click', spinRoulette);
 clearHistoryBtn.addEventListener('click', clearHistory);
 clearListBtn.addEventListener('click', clearOptions);
+createRoomBtn.addEventListener('click', createRoom);
+copyLinkBtn.addEventListener('click', copyRoomLink);
 
 // Инициализация
+initRoom();
 renderOptions();
 renderHistory();
