@@ -330,25 +330,46 @@ function startRouletteAnimation(winnerText) {
         fetch('http://127.0.0.1:7242/ingest/5fbeb120-b790-4467-9560-7d0a9211241b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:333',message:'animation starting after buffer',data:{winnerText,winnerIndex,optionsLength:options.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
         // #endregion
         
-        // Вычисляем общее количество шагов
-        const minCycles = 4; // Минимум 4 полных круга
+        // Расчет пути (Физика Трения)
+        const minCycles = 5; // Минимум 5 полных кругов
         const startIndex = 0;
-        let totalSteps;
         
-        if (winnerIndex >= startIndex) {
-            totalSteps = (options.length * minCycles) + (winnerIndex - startIndex);
-        } else {
-            // Если winnerIndex меньше startIndex, нужно пройти полный круг
-            totalSteps = (options.length * minCycles) + (options.length - startIndex) + winnerIndex;
+        // Рассчитываем расстояние до победителя
+        let distanceToWinner = winnerIndex - startIndex;
+        
+        // Если результат отрицательный или 0, добавляем еще круг
+        if (distanceToWinner <= 0) {
+            distanceToWinner = options.length + distanceToWinner;
         }
         
-        let currentStep = 0;
+        // Общее количество шагов: минимум 5 кругов + расстояние до победителя
+        const totalSteps = (options.length * minCycles) + distanceToWinner;
+        
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/5fbeb120-b790-4467-9560-7d0a9211241b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:333',message:'friction-based animation started',data:{winnerText,winnerIndex,startIndex,distanceToWinner,totalSteps,optionsLength:options.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
+        
+        // Начальные параметры
+        let currentIndex = startIndex;
+        let stepsLeft = totalSteps;
+        let currentDelay = 50; // Начальная скорость 50ms
         let currentTimeoutId = null;
         
+        // Функция обновления подсветки
+        function updateHighlight(index) {
+            // Убираем подсветку со всех элементов
+            items.forEach(item => item.classList.remove('highlight'));
+            
+            // Подсвечиваем текущий элемент
+            if (items[index]) {
+                items[index].classList.add('highlight');
+            }
+        }
+        
         // Функция показа победителя
-        function showWinner() {
+        function showWinner(finalIndex) {
             // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/5fbeb120-b790-4467-9560-7d0a9211241b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:349',message:'showWinner called',data:{winnerText,winnerIndex,currentStep,totalSteps},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+            fetch('http://127.0.0.1:7242/ingest/5fbeb120-b790-4467-9560-7d0a9211241b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:360',message:'showWinner called',data:{winnerText,winnerIndex,finalIndex,stepsLeft},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
             // #endregion
             
             // Убираем highlight со всех элементов
@@ -368,7 +389,7 @@ function startRouletteAnimation(winnerText) {
             // Восстанавливаем интерфейс
             setTimeout(() => {
                 // #region agent log
-                fetch('http://127.0.0.1:7242/ingest/5fbeb120-b790-4467-9560-7d0a9211241b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:370',message:'animation completed, restoring UI',data:{winnerText,winnerIndex},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+                fetch('http://127.0.0.1:7242/ingest/5fbeb120-b790-4467-9560-7d0a9211241b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:385',message:'animation completed, restoring UI',data:{winnerText,winnerIndex},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
                 // #endregion
                 isSpinning = false;
                 spinBtn.disabled = false;
@@ -378,45 +399,49 @@ function startRouletteAnimation(winnerText) {
             }, 2000);
         }
         
-        // Рекурсивная функция для выполнения шагов
-        function runStep() {
-            // Вычисляем текущий индекс для подсветки
-            const currentIndex = (startIndex + currentStep) % options.length;
+        // Рекурсивная функция для выполнения шагов (Физика Трения)
+        function nextStep() {
+            // Обновляем UI
+            currentIndex = (currentIndex + 1) % options.length;
+            updateHighlight(currentIndex);
+            stepsLeft--;
             
-            // Убираем подсветку со всех элементов
-            items.forEach(item => item.classList.remove('highlight'));
-            
-            // Подсвечиваем текущий элемент
-            if (items[currentIndex]) {
-                items[currentIndex].classList.add('highlight');
-            }
-            
-            // Проверяем, достигли ли финиша
-            if (currentStep === totalSteps) {
-                // Это последний шаг - сразу показываем победителя с минимальной задержкой
-                setTimeout(showWinner, 100);
+            // ФИНИШ: Мы ровно на победителе
+            if (stepsLeft === 0) {
+                // Проверяем, что мы действительно на победителе
+                if (currentIndex === winnerIndex) {
+                    showWinner(currentIndex);
+                } else {
+                    // Если что-то пошло не так, все равно показываем победителя
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/5fbeb120-b790-4467-9560-7d0a9211241b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'script.js:400',message:'stepsLeft reached 0 but index mismatch',data:{currentIndex,winnerIndex},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+                    // #endregion
+                    showWinner(winnerIndex);
+                }
                 return; // Завершаем анимацию
             }
             
-            // Вычисляем задержку для следующего шага (квадратичное замедление)
-            // Новая формула: delay = 50 + (250 * (t/d) * (t/d))
-            // где t = currentStep, d = totalSteps
-            // Диапазон: от 50ms до 300ms
-            const progress = currentStep / totalSteps;
-            const delay = 50 + (250 * progress * progress);
+            // РАСЧЕТ СКОРОСТИ ДЛЯ СЛЕДУЮЩЕГО ШАГА
+            // Если осталось много шагов (> 15) — крутим быстро (50мс)
+            // Если осталось мало шагов (< 15) — начинаем тормозить
+            if (stepsLeft < 15) {
+                currentDelay += 20; // Добавляем по 20мс трения на каждом шаге
+            }
             
-            // Переходим к следующему шагу
-            currentStep++;
+            // Важно: Не даем задержке стать больше 300мс, чтобы не было "зависания" в конце
+            if (currentDelay > 300) {
+                currentDelay = 300;
+            }
             
             // Планируем следующий шаг
-            currentTimeoutId = setTimeout(runStep, delay);
+            currentTimeoutId = setTimeout(nextStep, currentDelay);
         }
         
         // Сохраняем ID таймера для возможной отмены
         window.currentAnimationTimeoutId = currentTimeoutId;
         
         // Запускаем первый шаг
-        runStep();
+        nextStep();
     }, 500); // Буфер старта 500ms
 }
 
