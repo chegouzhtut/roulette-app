@@ -145,9 +145,7 @@ function clearOptions() {
         // Одиночный режим: меняем локально
         options = [];
         optionInput.value = '';
-        document.querySelectorAll('.option-item').forEach(item => {
-            item.classList.remove('highlighted', 'winner');
-        });
+        resetStyles();
         renderOptions();
     }
 }
@@ -231,6 +229,18 @@ function renderHistory() {
     `).join('');
 }
 
+// Сброс всех стилей элементов списка
+function resetStyles() {
+    const items = document.querySelectorAll('.option-item');
+    items.forEach(item => {
+        // Убираем все классы активности
+        item.classList.remove('highlighted', 'winner', 'active', 'highlight');
+        // Убираем инлайновые стили transform
+        item.style.transform = '';
+        item.style.scale = '';
+    });
+}
+
 // Эффекты победы
 function playWinEffects() {
     // Запуск конфетти
@@ -240,18 +250,6 @@ function playWinEffects() {
             spread: 70,
             origin: { y: 0.6 }
         });
-    }
-    
-    // Воспроизведение звука
-    try {
-        const winSound = document.getElementById('winSound');
-        if (winSound) {
-            winSound.play().catch(err => {
-                console.log('Не удалось воспроизвести звук:', err);
-            });
-        }
-    } catch (error) {
-        console.log('Ошибка при воспроизведении звука:', error);
     }
 }
 
@@ -264,10 +262,8 @@ function startRouletteAnimation(winnerText) {
     addBtn.disabled = true;
     optionInput.disabled = true;
 
-    // Убираем предыдущие подсветки
-    document.querySelectorAll('.option-item').forEach(item => {
-        item.classList.remove('highlighted', 'winner');
-    });
+    // Сбрасываем все стили перед началом вращения
+    resetStyles();
 
     const items = document.querySelectorAll('.option-item');
     const winnerIndex = options.indexOf(winnerText);
@@ -304,10 +300,8 @@ function startRouletteAnimation(winnerText) {
             // Прокручиваем до индекса победителя
             if (currentIndex !== winnerIndex) {
                 setTimeout(() => {
-                    // Убираем все подсветки
-                    items.forEach(item => {
-                        item.classList.remove('highlighted', 'winner');
-                    });
+                    // Сбрасываем все стили перед установкой победителя
+                    resetStyles();
                     
                     // Устанавливаем победителя
                     if (items[winnerIndex]) {
@@ -331,6 +325,9 @@ function startRouletteAnimation(winnerText) {
                 }, delay);
             } else {
                 setTimeout(() => {
+                    // Сбрасываем все стили перед установкой победителя
+                    resetStyles();
+                    
                     items[currentIndex].classList.add('winner');
                     addToHistory(winnerText);
                     
