@@ -9,6 +9,7 @@ const createRoomBtn = document.getElementById('createRoomBtn');
 const roomInfo = document.getElementById('roomInfo');
 const roomCode = document.getElementById('roomCode');
 const copyLinkBtn = document.getElementById('copyLinkBtn');
+const themeToggleBtn = document.getElementById('themeToggleBtn');
 
 // Инициализация Socket.io
 const socket = io();
@@ -60,6 +61,37 @@ function initRoom() {
     } else {
         roomInfo.style.display = 'none';
         createRoomBtn.style.display = 'inline-block';
+    }
+}
+
+// Переключение темы
+function toggleTheme() {
+    const body = document.body;
+    const html = document.documentElement;
+    const isLightMode = html.classList.contains('light-mode');
+    
+    if (isLightMode) {
+        html.classList.remove('light-mode');
+        localStorage.setItem('theme', 'dark');
+        themeToggleBtn.textContent = '🌓';
+    } else {
+        html.classList.add('light-mode');
+        localStorage.setItem('theme', 'light');
+        themeToggleBtn.textContent = '🌙';
+    }
+}
+
+// Инициализация темы
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    const html = document.documentElement;
+    
+    if (savedTheme === 'light') {
+        html.classList.add('light-mode');
+        themeToggleBtn.textContent = '🌙';
+    } else {
+        html.classList.remove('light-mode');
+        themeToggleBtn.textContent = '🌓';
     }
 }
 
@@ -199,6 +231,30 @@ function renderHistory() {
     `).join('');
 }
 
+// Эффекты победы
+function playWinEffects() {
+    // Запуск конфетти
+    if (typeof confetti !== 'undefined') {
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 }
+        });
+    }
+    
+    // Воспроизведение звука
+    try {
+        const winSound = document.getElementById('winSound');
+        if (winSound) {
+            winSound.play().catch(err => {
+                console.log('Не удалось воспроизвести звук:', err);
+            });
+        }
+    } catch (error) {
+        console.log('Ошибка при воспроизведении звука:', error);
+    }
+}
+
 // Запуск анимации рулетки
 function startRouletteAnimation(winnerText) {
     if (options.length === 0 || isSpinning) return;
@@ -261,6 +317,9 @@ function startRouletteAnimation(winnerText) {
                     // Сохраняем победителя в историю
                     addToHistory(winnerText);
                     
+                    // Эффекты победы
+                    playWinEffects();
+                    
                     // Восстанавливаем интерфейс
                     setTimeout(() => {
                         isSpinning = false;
@@ -274,6 +333,10 @@ function startRouletteAnimation(winnerText) {
                 setTimeout(() => {
                     items[currentIndex].classList.add('winner');
                     addToHistory(winnerText);
+                    
+                    // Эффекты победы
+                    playWinEffects();
+                    
                     setTimeout(() => {
                         isSpinning = false;
                         spinBtn.disabled = false;
@@ -333,8 +396,10 @@ clearHistoryBtn.addEventListener('click', clearHistory);
 clearListBtn.addEventListener('click', clearOptions);
 createRoomBtn.addEventListener('click', createRoom);
 copyLinkBtn.addEventListener('click', copyRoomLink);
+themeToggleBtn.addEventListener('click', toggleTheme);
 
 // Инициализация
+initTheme();
 initRoom();
 renderOptions();
 renderHistory();

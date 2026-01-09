@@ -5,12 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Decision Roulette</title>
     <link rel="stylesheet" href="style.css">
+    <script>
+        // Применяем тему сразу, чтобы избежать мигания
+        (function() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') {
+                document.documentElement.classList.add('light-mode');
+            }
+        })();
+    </script>
 </head>
 <body>
     <div class="container">
         <div class="header-section">
             <h1>🎰 Decision Roulette</h1>
-            <button class="btn create-room-btn" id="createRoomBtn">Создать комнату</button>
+            <div class="header-actions">
+                <button class="theme-toggle-btn" id="themeToggleBtn" title="Переключить тему">🌓</button>
+                <button class="btn create-room-btn" id="createRoomBtn">Создать комнату</button>
+            </div>
         </div>
 
         <div class="room-info" id="roomInfo" style="display: none;">
@@ -55,6 +67,9 @@
         </div>
     </div>
 
+    <audio id="winSound" src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3" preload="auto"></audio>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
 </body>
